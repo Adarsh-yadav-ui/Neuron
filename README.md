@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+let's understand the whole thing.
 
-## Getting Started
+Here's the full stack for **Cortex**:
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Tech Stack (Final)
+
+| Layer                   | Tool                        |
+| ----------------------- | --------------------------- |
+| Framework               | Next.js 16.2 (App Router)   |
+| Auth                    | Clerk                       |
+| Backend + DB + Realtime | Convex                      |
+| File Storage            | Convex Storage              |
+| Background Jobs         | Inngest                     |
+| LLM                     | Gemini 1.5 Pro              |
+| Embeddings              | Gemini `text-embedding-004` |
+| Vector Search           | Convex Vector Search        |
+| Block Editor            | TipTap                      |
+| UI                      | shadcn/ui + Tailwind CSS    |
+| Hosting                 | Vercel                      |
+
+---
+
+## Folder Structure
+
+```
+cortex/
+├── app/
+│   ├── (auth)/
+│   │   ├── sign-in/[[...sign-in]]/page.tsx
+│   │   └── sign-up/[[...sign-up]]/page.tsx
+│   ├── (main)/
+│   │   ├── layout.tsx            # Sidebar + main layout
+│   │   ├── dashboard/
+│   │   │   └── page.tsx          # All books grid
+│   │   └── book/[bookId]/
+│   │       ├── page.tsx          # Main book view
+│   │       ├── chat/
+│   │       │   └── page.tsx      # Q&A chat
+│   │       └── notes/
+│   │           └── page.tsx      # TipTap editor
+│   └── layout.tsx
+│
+├── components/
+│   ├── ui/                       # shadcn components
+│   ├── book/
+│   │   ├── BookUploader.tsx
+│   │   ├── BookCard.tsx
+│   │   └── BookStatus.tsx        # Processing indicator
+│   ├── chat/
+│   │   ├── ChatWindow.tsx
+│   │   ├── ChatMessage.tsx
+│   │   └── ChatInput.tsx
+│   └── editor/
+│       └── TipTapEditor.tsx
+│
+├── convex/
+│   ├── schema.ts
+│   ├── books.ts                  # Upload, list, get
+│   ├── chunks.ts                 # Vector search query
+│   ├── messages.ts               # Chat history
+│   ├── notes.ts                  # Save/load TipTap content
+│   └── http.ts                   # Inngest webhook endpoint
+│
+├── inngest/
+│   ├── client.ts
+│   └── functions/
+│       └── processBook.ts        # Main ingestion pipeline
+│
+└── lib/
+    ├── gemini.ts                 # Gemini client
+    └── pdf.ts                    # PDF text extraction
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## The Inngest Pipeline (`processBook.ts`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+Trigger: book uploaded
+  │
+  ├── Step 1: Extract text from PDF (pdf-parse)
+  ├── Step 2: Split into chunks (sliding window, ~500 words, 50 overlap)
+  ├── Step 3: Embed each chunk in batches (Gemini text-embedding-004)
+  ├── Step 4: Write chunks + vectors to Convex
+  └── Step 5: Mark book status as "ready"
+```
 
-## Learn More
+Each step is isolated — if embedding fails at chunk 47, Inngest retries from chunk 47, not from scratch.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## The RAG Flow (per user question)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+User types question
+  │
+  ├── 1. Embed the question (Gemini)
+  ├── 2. Vector search Convex — top 6 chunks filtered by bookId
+  ├── 3. Build prompt:
+  │      "Answer based only on these excerpts: [chunks]
+  │       Question: [question]"
+  ├── 4. Stream response from Gemini 1.5 Pro
+  └── 5. Save message + sourceChunkIds to Convex
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Build Phases
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Phase 1 — Foundation** (Week 1)
+
+- Next.js + Clerk + Convex + shadcn setup
+- Book upload → Convex Storage
+- Dashboard showing books
+
+**Phase 2 — Ingestion** (Week 2)
+
+- Inngest pipeline: PDF → chunks → embeddings → Convex
+- Book status indicator (uploaded → processing → ready)
+
+**Phase 3 — Chat** (Week 3)
+
+- Vector search query
+- RAG prompt assembly
+- Streaming chat UI with TipTap
+
+**Phase 4 — Notes** (Week 4)
+
+- TipTap editor wired to Convex
+- Auto-save on change
+
+**Phase 5 — Polish** (Week 5+)
+
+- Source citations in chat
+- Keyboard shortcuts
+- Good empty states + loading skeletons
+
+---
