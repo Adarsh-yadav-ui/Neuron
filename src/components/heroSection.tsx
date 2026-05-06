@@ -23,8 +23,9 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-// import { Authenticated, Unauthenticated } from "convex/react";
-// import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { Authenticated, Unauthenticated } from "convex/react";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import Link from "next/link";
 
 const transitionVariants = {
   item: {
@@ -78,7 +79,7 @@ const features = [
     icon: ShieldCheck,
     title: "Private by default",
     description:
-      "Your books, notes, and conversations are yours alone. No sharing, no training on your data.",
+      "Your notebooks, notes, and conversations are yours alone. No sharing, no training on your data.",
     badge: null,
   },
 ];
@@ -88,7 +89,7 @@ const useCases = [
     icon: BookOpen,
     title: "Deep reading",
     description:
-      "Stop passively reading. Chat with your books, surface connections, and retain what actually matters.",
+      "Stop passively reading. Chat with your notebooks, surface connections, and retain what actually matters.",
   },
   {
     icon: MessageSquare,
@@ -108,7 +109,7 @@ const stats = [
   { value: "2M", label: "Token context window" },
   { value: "<1s", label: "Answer latency" },
   { value: "100%", label: "Source-grounded" },
-  { value: "∞", label: "Books supported" },
+  { value: "∞", label: "Notebooks supported" },
 ];
 
 export function HeroSection() {
@@ -119,7 +120,7 @@ export function HeroSection() {
         {/* Teal glow blob — top left */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-32 -left-32 size-[500px] rounded-full opacity-20 blur-3xl"
+          className="pointer-events-none absolute -top-32 -left-32 size-125 rounded-full opacity-20 blur-3xl"
           style={{
             background: "radial-gradient(circle, #1D9E75, transparent 70%)",
           }}
@@ -128,7 +129,7 @@ export function HeroSection() {
         {/* Purple glow blob — top right */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-20 -right-32 size-[400px] rounded-full opacity-15 blur-3xl"
+          className="pointer-events-none absolute -top-20 -right-32 size-100 rounded-full opacity-15 blur-3xl"
           style={{
             background: "radial-gradient(circle, #7F77DD, transparent 70%)",
           }}
@@ -160,7 +161,7 @@ export function HeroSection() {
                 </Badge>
 
                 <h1 className="mt-4 max-w-2xl text-balance text-5xl font-medium md:text-6xl lg:mt-6">
-                  Your books,{" "}
+                  Your notebooks,{" "}
                   <span
                     style={{
                       background: "linear-gradient(90deg, #1D9E75, #7F77DD)",
@@ -180,7 +181,7 @@ export function HeroSection() {
                 </p>
 
                 <div className="mt-10 flex items-center gap-2">
-                  {/* <Unauthenticated>
+                  <Unauthenticated>
                     <div className="rounded-[14px] border p-0.5" style={{ background: "rgba(29,158,117,0.1)", borderColor: "#1D9E75" }}>
                       <SignInButton>
                         <Button size="lg" className="rounded-xl px-5 text-base" style={{ background: "#1D9E75", color: "#fff" }}>
@@ -201,7 +202,7 @@ export function HeroSection() {
                         <ArrowRight className="size-4" />
                       </Button>
                     </Link>
-                  </Authenticated> */}
+                  </Authenticated>
                   <div
                     className="rounded-[14px] border p-0.5"
                     style={{
@@ -428,7 +429,7 @@ export function HeroSection() {
                 minute. No setup, no configuration — just understanding.
               </p>
             </div>
-            {/* <Unauthenticated>
+            <Unauthenticated>
               <SignUpButton>
                 <Button size="lg" variant="outline" className="shrink-0 rounded-xl px-6 text-white border-white/30 hover:bg-white/10">
                   Get started free
@@ -443,7 +444,7 @@ export function HeroSection() {
                   <ArrowRight className="size-4" />
                 </Button>
               </Link>
-            </Authenticated> */}
+            </Authenticated>
           </div>
         </Card>
       </section>

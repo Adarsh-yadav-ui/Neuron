@@ -1,6 +1,6 @@
 let's understand the whole thing.
 
-Here's the full stack for **Cortex**:
+Here's the full stack for **neuron**:
 
 ---
 
@@ -25,7 +25,7 @@ Here's the full stack for **Cortex**:
 ## Folder Structure
 
 ```
-cortex/
+neuron/
 ├── app/
 │   ├── (auth)/
 │   │   ├── sign-in/[[...sign-in]]/page.tsx

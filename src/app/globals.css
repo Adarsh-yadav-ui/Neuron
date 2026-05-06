@@ -181,3 +181,7 @@
 .glow-purple {
   box-shadow: 0 0 24px oklch(0.62 0.17 290.0 / 0.3);
 }
+::view-transition-old(root), ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
