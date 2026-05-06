@@ -2,21 +2,21 @@
 
 import React from "react";
 import Image from "next/image";
-// import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
-// import { Authenticated, Unauthenticated, useQuery } from "convex/react";
+import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import Link from "next/link";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MenuToggleIcon } from "./menu-toggle-icon";
 import { useScroll } from "@/hooks/use-scroll";
-// import { api } from "../../convex/_generated/api";
+import { api } from "../../convex/_generated/api";
+import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
 
 export function Navbar() {
   const [open, setOpen] = React.useState(false);
   const scrolled = useScroll(10);
-
-  //   const currentUser = useQuery(api.users.current);
+  const currentUser = useQuery(api.users.current);
 
   const links = [
     {
@@ -76,7 +76,14 @@ export function Navbar() {
           alt="logo-dark-with-black-text"
           height={130}
           width={130}
-          className=" m-2"
+          className="m-2 dark:hidden block"
+        />
+        <Image
+          src="/logo_white.svg"
+          alt="logo-light-with-white-text"
+          height={130}
+          width={130}
+          className="m-2 dark:block hidden"
         />
         <div className="hidden items-center gap-2 md:flex">
           {links.map((link, i) => (
@@ -89,9 +96,9 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          {/* <Unauthenticated>
+          <Unauthenticated>
             <SignInButton mode="modal">
-              <Button variant="neutral">Sign In</Button>
+              <Button>Sign In</Button>
             </SignInButton>
             <SignUpButton mode="modal">
               <Button>Get Started</Button>
@@ -100,10 +107,10 @@ export function Navbar() {
 
           <Authenticated>
             <Link href="/dashboard" className="mr-2">
-              <Button >Dashboard</Button>
+              <Button>Dashboard</Button>
             </Link>
             <UserButton />
-          </Authenticated> */}
+          </Authenticated>
         </div>
         <Button
           size="icon"
@@ -142,7 +149,7 @@ export function Navbar() {
             ))}
           </div>
           <div className="flex flex-col gap-2">
-            {/* <Unauthenticated>
+            <Unauthenticated>
               <SignInButton>
                 <Button className="w-full">Sign In</Button>
               </SignInButton>
@@ -156,6 +163,7 @@ export function Navbar() {
                   <Link href="/dashboard">Navigate to dashboard</Link>
                 </Button>
                 <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 flex-1 min-w-0">
+                  <AnimatedThemeToggler className="mt-2" />
                   <div className="shrink-0 pt-2">
                     <UserButton />
                   </div>
@@ -179,7 +187,7 @@ export function Navbar() {
                   </div>
                 </div>
               </div>
-            </Authenticated> */}
+            </Authenticated>
           </div>
         </div>
       </div>
