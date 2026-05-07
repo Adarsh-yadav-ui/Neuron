@@ -79,7 +79,7 @@ function NotebookCard({
   return (
     <div
       className="group bg-card border rounded-xl p-5 cursor-pointer transition-all hover:border-foreground/20 hover:shadow-sm relative flex flex-col justify-between min-h-35"
-      onClick={() => router.push(`/notebook/${notebook._id}`)}
+      onClick={() => router.push(`/dashboard/notebooks/${notebook._id}`)}
     >
       {/* Actions */}
       <div
