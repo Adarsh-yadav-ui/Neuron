@@ -31,12 +31,14 @@ export default defineSchema({
     notebookId: v.id("notebooks"),
     userId: v.id("users"),
     title: v.string(),
-    type: v.union(v.literal("pdf"), v.literal("text"), v.literal("url")),
-    // Convex storage file ID (for pdf/text uploads)
+    type: v.union(
+      v.literal("pdf"),
+      v.literal("text"),
+      v.literal("url"),
+      v.literal("youtube"),
+    ),
     storageId: v.optional(v.id("_storage")),
-    // For URL sources
     url: v.optional(v.string()),
-    // Raw extracted text (stored after ingestion)
     extractedText: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),

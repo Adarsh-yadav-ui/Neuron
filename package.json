@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev": "set TEMP=D:\\Temp && set TMP=D:\\Temp && next dev",
+    "convex": "set TEMP=D:\\Temp && set TMP=D:\\Temp && convex dev"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.67",
