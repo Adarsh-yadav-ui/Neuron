@@ -59,7 +59,7 @@ export default defineSchema({
     text: v.string(),
     // Index within the source (ordering)
     chunkIndex: v.number(),
-    // Gemini text-embedding-004 → 768 dimensions
+    // Gemini text-embedding-004 → 3072 dimensions
     embedding: v.array(v.float64()),
     createdAt: v.number(),
   })
@@ -67,7 +67,7 @@ export default defineSchema({
     .index("by_notebook", ["notebookId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 768,
+      dimensions: 3072,
       filterFields: ["notebookId"],
     }),
 
@@ -75,10 +75,9 @@ export default defineSchema({
   messages: defineTable({
     notebookId: v.id("notebooks"),
     userId: v.id("users"),
-    role: v.union(v.literal("user"), v.literal("assistant")),
-    content: v.string(),
+    question: v.string(),
+    answer: v.string(),
     // Source chunks used to generate this response (for citations)
-    sourceChunkIds: v.optional(v.array(v.id("chunks"))),
     createdAt: v.number(),
   })
     .index("by_notebook", ["notebookId"])

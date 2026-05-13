@@ -59,7 +59,7 @@ export const useUploadSource = () => {
     const storageUrl = await getStorageUrl({ sourceId });
 
     // 5. Inngest trigger — fire and forget
-    fireInngest({ sourceId, type: "pdf", storageUrl, url: null });
+    fireInngest({ sourceId, type: "pdf", storageUrl, url: null, notebookId });
 
     return sourceId;
   };
@@ -80,7 +80,7 @@ export const useUploadSource = () => {
 
     const sourceId = await createUrlSource({ notebookId, url });
 
-    fireInngest({ sourceId, type: "url", storageUrl: null, url });
+    fireInngest({ sourceId, type: "url", storageUrl: null, url, notebookId });
 
     return sourceId;
   };
@@ -96,7 +96,13 @@ export const useUploadSource = () => {
 
     const sourceId = await createYoutubeSource({ notebookId, url, title });
 
-    fireInngest({ sourceId, type: "youtube", storageUrl: null, url });
+    fireInngest({
+      sourceId,
+      type: "youtube",
+      storageUrl: null,
+      url,
+      notebookId,
+    });
 
     return sourceId;
   };

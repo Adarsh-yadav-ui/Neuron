@@ -33,6 +33,22 @@ import { api } from "../../../../../convex/_generated/api";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { History } from "lucide-react";
 
 type Source = {
   _id: Id<"sources">;
@@ -215,20 +231,24 @@ function SourcesList({
   );
 }
 
-function ChatPanel({
+const ChatPanel = ({
   notebookId,
   userName,
 }: {
   notebookId: string;
   userName: string;
-}) {
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sourceMode, setSourceMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ Convex mutation
+  const saveMessage = useMutation(api.messages.saveMessage);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -236,25 +256,107 @@ function ChatPanel({
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
-    const userMessage: Message = { role: "user", content: input.trim() };
+
+    // ✅ Save question before clearing input
+    const question = input.trim();
+
+    // ✅ User message object
+    const userMessage: Message = {
+      role: "user",
+      content: question,
+    };
+
+    // ✅ Add user message to UI
     const newMessages = [...messages, userMessage];
+
     setMessages(newMessages);
     setInput("");
     setLoading(true);
 
+    // ✅ Store complete streamed answer
+    let fullAnswer = "";
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, sourceMode, userName }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: newMessages,
+          sourceMode,
+          notebookId,
+        }),
       });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setMessages((prev) => [...prev, data]);
-    } catch {
+
+      if (!res.ok) {
+        throw new Error("Failed");
+      }
+
+      if (!res.body) {
+        throw new Error("No body");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      let firstChunk = true;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const text = decoder.decode(value);
+
+        // ✅ Collect full streamed answer
+        fullAnswer += text;
+
+        // ✅ First chunk
+        if (firstChunk) {
+          setLoading(false);
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: text,
+            },
+          ]);
+
+          firstChunk = false;
+        } else {
+          // ✅ Append remaining chunks
+          setMessages((prev) => {
+            const updated = [...prev];
+
+            const last = updated[updated.length - 1];
+
+            updated[updated.length - 1] = {
+              ...last,
+              content: last.content + text,
+            };
+
+            return updated;
+          });
+        }
+      }
+
+      // ✅ AUTO SAVE TO CONVEX
+      if (fullAnswer.trim()) {
+        await saveMessage({
+          notebookId: notebookId as Id<"notebooks">,
+          question,
+          content: fullAnswer,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+
       toast.error("Failed to send message");
     } finally {
       setLoading(false);
+
       inputRef.current?.focus();
     }
   };
@@ -273,6 +375,7 @@ function ChatPanel({
             "General mode"
           )}
         </p>
+
         <div className="relative">
           <Button
             size="icon"
@@ -299,22 +402,30 @@ function ChatPanel({
           {settingsOpen && (
             <div className="absolute right-0 top-9 w-64 bg-popover border border-border rounded-xl shadow-lg p-4 z-20">
               <p className="text-sm font-semibold mb-3">Chat Settings</p>
+
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">Source mode</p>
+
                   <p className="text-xs text-muted-foreground mt-0.5">
                     AI answers strictly from your uploaded sources only.
                   </p>
                 </div>
+
                 <button
                   onClick={() => setSourceMode((p) => !p)}
-                  className={`relative shrink-0 w-10 h-5 rounded-full transition-colors ${sourceMode ? "bg-amber-500" : "bg-muted-foreground/30"}`}
+                  className={`relative shrink-0 w-10 h-5 rounded-full transition-colors ${
+                    sourceMode ? "bg-amber-500" : "bg-muted-foreground/30"
+                  }`}
                 >
                   <span
-                    className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${sourceMode ? "translate-x-5" : "translate-x-0"}`}
+                    className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                      sourceMode ? "translate-x-5" : "translate-x-0"
+                    }`}
                   />
                 </button>
               </div>
+
               <button
                 className="mt-3 text-xs text-muted-foreground underline w-full text-right"
                 onClick={() => setSettingsOpen(false)}
@@ -331,22 +442,30 @@ function ChatPanel({
         <ScrollArea className="h-full px-6 py-4">
           <div className="space-y-5">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center min-h-100 text-center gap-3">
+              <div className="flex flex-col items-center justify-center min-h-[70vh] text-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center text-2xl">
-                  🧠
+                  <Image
+                    src="/neuron-icon.png"
+                    alt="icon"
+                    height={26}
+                    width={26}
+                  />
                 </div>
+
                 <div>
                   <p className="text-sm font-semibold">
                     {userName !== "there"
                       ? `Hi ${userName}! Ask me anything`
                       : "Ask Neuron anything"}
                   </p>
+
                   <p className="text-xs text-muted-foreground mt-1">
                     {sourceMode
                       ? "Answers from your sources."
                       : "Powered by Llama 3.3 via Groq."}
                   </p>
                 </div>
+
                 <div className="flex flex-wrap gap-2 justify-center mt-1">
                   {[
                     "Summarize my sources",
@@ -370,13 +489,16 @@ function ChatPanel({
               messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex gap-3 ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
                   {msg.role === "assistant" && (
                     <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-background text-xs font-semibold shrink-0 mt-0.5">
                       N
                     </div>
                   )}
+
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                       msg.role === "user"
@@ -389,11 +511,14 @@ function ChatPanel({
                 </div>
               ))
             )}
+
+            {/* Loading */}
             {loading && (
               <div className="flex gap-3">
                 <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-background text-xs font-semibold shrink-0">
                   N
                 </div>
+
                 <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3">
                   <div className="flex gap-1 items-center h-4">
                     <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
@@ -403,6 +528,7 @@ function ChatPanel({
                 </div>
               </div>
             )}
+
             <div ref={bottomRef} />
           </div>
         </ScrollArea>
@@ -428,11 +554,14 @@ function ChatPanel({
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
             disabled={loading}
           />
+
           <Button
             onClick={sendMessage}
             disabled={loading || !input.trim()}
             size="sm"
-            className={`h-7 px-3 ${sourceMode ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+            className={`h-7 px-3 ${
+              sourceMode ? "bg-amber-500 hover:bg-amber-600 text-white" : ""
+            }`}
           >
             {loading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -453,35 +582,63 @@ function ChatPanel({
             )}
           </Button>
         </div>
+
         <p className="text-xs text-muted-foreground mt-2 text-center">
           Neuron can make mistakes. Verify important information.
         </p>
       </div>
     </div>
   );
-}
+};
 
 const Page = () => {
-  const { notebookId } = useParams<{ notebookId: string }>();
+  const { notebookId } = useParams<{
+    notebookId: string;
+  }>();
+
   const router = useRouter();
+
   const { user } = useUser();
+
   const isMobile = useMediaQuery("(max-width: 768px)");
+
   const [sourceOpen, setSourceOpen] = useState(false);
+
   const [panelOpen, setPanelOpen] = useState(true);
 
   const userName = user?.firstName ?? user?.username ?? "there";
 
   const notebookSources = useQuery(
     api.sources.getNotebookSources,
-    notebookId ? { notebookId: notebookId as Id<"notebooks"> } : "skip",
+
+    notebookId
+      ? {
+          notebookId: notebookId as Id<"notebooks">,
+        }
+      : "skip",
   );
 
   const notebook = useQuery(
     api.notebooks.getNotebook,
-    notebookId ? { notebookId: notebookId as Id<"notebooks"> } : "skip",
+
+    notebookId
+      ? {
+          notebookId: notebookId as Id<"notebooks">,
+        }
+      : "skip",
   );
 
-  const isLoading = notebookSources === undefined;
+  // ✅ Saved chat history
+  const savedMessages = useQuery(
+    api.messages.getMessages,
+
+    notebookId
+      ? {
+          notebookId: notebookId as Id<"notebooks">,
+        }
+      : "skip",
+  );
+
   const sources = notebookSources ?? [];
 
   return (
@@ -489,7 +646,7 @@ const Page = () => {
       {/* Topbar */}
       <nav className="flex items-center justify-between px-4 py-3 border-b bg-background shrink-0 z-10">
         <div className="flex items-center gap-3">
-          {/* Mobile sheet trigger */}
+          {/* Mobile sheet */}
           {isMobile ? (
             <Sheet>
               <SheetTrigger className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
@@ -500,25 +657,24 @@ const Page = () => {
                 <SheetHeader className="px-4 py-3 border-b shrink-0">
                   <div className="flex items-center justify-between">
                     <SheetTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">
-                      {sources.length} Sources Found
+                      {sources.length} Sources
                     </SheetTitle>
                   </div>
                 </SheetHeader>
-                <SourcesList
-                  notebookSources={sources}
-                  isLoading={isLoading}
-                  onAddSource={() => setSourceOpen(true)}
-                />
+
+                <ScrollArea className="flex-1">
+                  {sources.map((source) => (
+                    <SourceCard key={source._id} source={source as Source} />
+                  ))}
+                </ScrollArea>
               </SheetContent>
             </Sheet>
           ) : (
-            /* Desktop toggle */
             <Button
               size="icon"
               variant="ghost"
               className="h-8 w-8"
               onClick={() => setPanelOpen((p) => !p)}
-              aria-label="Toggle sources panel"
             >
               {panelOpen ? (
                 <PanelLeftClose className="h-4 w-4" />
@@ -536,7 +692,56 @@ const Page = () => {
           </span>
         </div>
 
+        {/* Right actions */}
         <div className="flex items-center gap-2">
+          {/* ✅ History Dialog */}
+          <Dialog>
+            <DialogTrigger
+              render={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-8 text-xs"
+                />
+              }
+            >
+              <History className="h-3.5 w-3.5" />
+
+              <span className="hidden sm:inline">History</span>
+            </DialogTrigger>
+
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Chat History</DialogTitle>
+              </DialogHeader>
+
+              <ScrollArea className="max-h-[70vh] pr-4">
+                {!savedMessages || savedMessages.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-muted-foreground">
+                    No saved chats yet.
+                  </div>
+                ) : (
+                  <Accordion className="w-full">
+                    {savedMessages.map((msg) => (
+                      <AccordionItem key={msg._id} value={msg._id}>
+                        <AccordionTrigger className="text-left text-sm">
+                          {msg.question}
+                        </AccordionTrigger>
+
+                        <AccordionContent>
+                          <div className="rounded-xl bg-muted p-4 text-sm whitespace-pre-wrap leading-relaxed">
+                            {msg.answer}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+
+          {/* Notes */}
           <Button
             size="sm"
             variant="outline"
@@ -546,14 +751,18 @@ const Page = () => {
             }
           >
             <NotebookPen className="h-3.5 w-3.5" />
+
             <span className="hidden sm:inline">Notes</span>
           </Button>
+
+          {/* Add source */}
           <Button
             size="sm"
             className="gap-1.5 h-8 text-xs"
             onClick={() => setSourceOpen(true)}
           >
             <Plus className="h-3.5 w-3.5" />
+
             <span className="hidden sm:inline">Add source</span>
           </Button>
         </div>
@@ -561,7 +770,7 @@ const Page = () => {
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop Sources Panel */}
+        {/* Desktop sources */}
         {!isMobile && (
           <div
             className={`border-r bg-muted/20 flex flex-col shrink-0 transition-all duration-300 overflow-hidden ${
@@ -572,15 +781,17 @@ const Page = () => {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Sources
               </p>
+
               <span className="text-xs text-muted-foreground">
                 {sources.length}
               </span>
             </div>
-            <SourcesList
-              notebookSources={sources}
-              isLoading={isLoading}
-              onAddSource={() => setSourceOpen(true)}
-            />
+
+            <ScrollArea className="flex-1">
+              {sources.map((source) => (
+                <SourceCard key={source._id} source={source as Source} />
+              ))}
+            </ScrollArea>
           </div>
         )}
 
@@ -590,6 +801,7 @@ const Page = () => {
         </div>
       </div>
 
+      {/* Upload modal */}
       <UploadSource
         notebookId={notebookId as Id<"notebooks">}
         open={sourceOpen}

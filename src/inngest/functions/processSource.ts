@@ -19,11 +19,12 @@ export const processSource = inngest.createFunction(
     },
   },
   async ({ event, step }: any) => {
-    const { sourceId, type, storageUrl, url } = event.data as {
+    const { sourceId, type, storageUrl, url, notebookId } = event.data as {
       sourceId: string;
       type: "pdf" | "url" | "youtube";
       storageUrl: string | null;
       url: string | null;
+      notebookId: string;
     };
 
     await step.run("mark-processing", async () => {
@@ -66,10 +67,42 @@ export const processSource = inngest.createFunction(
     });
 
     await step.run("save-text", async () => {
-      await convex.mutation(api.sources.updateExtractedText, {
+  // pehle sirf text save karo
+  await convex.mutation(api.sources.updateSourceStatus, {
+    sourceId: sourceId as Id<"sources">,
+    status: "processing",
+  });
+  // phir text patch karo
+  await convex.mutation(api.sources.saveExtractedText, {
+    sourceId: sourceId as Id<"sources">,
+    extractedText,
+  });
+});
+
+    // save chunks + embeddings
+    await step.run("chunk-and-embed", async () => {
+      const { chunkText } = await import("../../lib/chunker");
+      const { embedText } = await import("../../lib/embedder");
+
+      const chunks = chunkText(extractedText);
+
+      for (let i = 0; i < chunks.length; i++) {
+        const embedding = await embedText(chunks[i]);
+
+        await convex.mutation(api.chunks.saveChunk, {
+          notebookId: notebookId as Id<"notebooks">,
+          sourceId: sourceId as Id<"sources">,
+          text: chunks[i],
+          chunkIndex: i,
+          embedding,
+        });
+      }
+    });
+
+    await step.run("mark-ready", async () => {
+      await convex.mutation(api.sources.updateSourceStatus, {
         sourceId: sourceId as Id<"sources">,
-        extractedText,
-        status: "ready",
+        status: "ready", // ← sab khatam hone ke baad
       });
     });
   },
