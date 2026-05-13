@@ -182,22 +182,40 @@ export function HeroSection() {
 
                 <div className="mt-10 flex items-center gap-2">
                   <Unauthenticated>
-                    <div className="rounded-[14px] border p-0.5" style={{ background: "rgba(29,158,117,0.1)", borderColor: "#1D9E75" }}>
+                    <div
+                      className="rounded-[14px] border p-0.5"
+                      style={{
+                        background: "rgba(29,158,117,0.1)",
+                        borderColor: "#1D9E75",
+                      }}
+                    >
                       <SignInButton>
-                        <Button size="lg" className="rounded-xl px-5 text-base" style={{ background: "#1D9E75", color: "#fff" }}>
+                        <Button
+                          size="lg"
+                          className="rounded-xl px-5 text-base"
+                          style={{ background: "#1D9E75", color: "#fff" }}
+                        >
                           <span className="text-nowrap">Start reading</span>
                         </Button>
                       </SignInButton>
                     </div>
                     <SignUpButton>
-                      <Button size="lg" variant="ghost" className="h-10.5 rounded-xl px-5 text-base">
+                      <Button
+                        size="lg"
+                        variant="ghost"
+                        className="h-10.5 rounded-xl px-5 text-base"
+                      >
                         <span className="text-nowrap">See how it works</span>
                       </Button>
                     </SignUpButton>
                   </Unauthenticated>
                   <Authenticated>
                     <Link href="/dashboard">
-                      <Button size="lg" className="rounded-xl px-5 text-base" style={{ background: "#1D9E75", color: "#fff" }}>
+                      <Button
+                        size="lg"
+                        className="rounded-xl px-5 text-base"
+                        style={{ background: "#1D9E75", color: "#fff" }}
+                      >
                         Go to dashboard
                         <ArrowRight className="size-4" />
                       </Button>
@@ -263,7 +281,7 @@ export function HeroSection() {
               >
                 <img
                   className="bg-background aspect-15/8 relative hidden rounded-2xl dark:block"
-                  src="https://placehold.co/2700x1440/0f1117/1D9E75?text=Neuron"
+                  src="/placeholder.png"
                   alt="Neuron app interface"
                   width="2700"
                   height="1440"
@@ -431,7 +449,11 @@ export function HeroSection() {
             </div>
             <Unauthenticated>
               <SignUpButton>
-                <Button size="lg" variant="outline" className="shrink-0 rounded-xl px-6 text-white border-white/30 hover:bg-white/10">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="shrink-0 rounded-xl px-6 text-white border-white/30 hover:bg-white/10"
+                >
                   Get started free
                   <ArrowRight className="size-4" />
                 </Button>
@@ -439,7 +461,11 @@ export function HeroSection() {
             </Unauthenticated>
             <Authenticated>
               <Link href="/dashboard">
-                <Button size="lg" variant="outline" className="shrink-0 rounded-xl px-6 text-white border-white/30 hover:bg-white/10">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="shrink-0 rounded-xl px-6 text-white border-white/30 hover:bg-white/10"
+                >
                   Go to dashboard
                   <ArrowRight className="size-4" />
                 </Button>

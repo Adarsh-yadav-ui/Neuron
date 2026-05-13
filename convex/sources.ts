@@ -213,3 +213,15 @@ export const getSourceStorageUrl = query({
     return await ctx.storage.getUrl(source.storageId);
   },
 });
+
+export const saveExtractedText = mutation({
+  args: {
+    sourceId: v.id("sources"),
+    extractedText: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.sourceId, {
+      extractedText: args.extractedText,
+    });
+  },
+});

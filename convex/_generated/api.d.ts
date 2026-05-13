@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as chunks from "../chunks.js";
 import type * as http from "../http.js";
+import type * as messages from "../messages.js";
 import type * as notebooks from "../notebooks.js";
 import type * as sourceActions from "../sourceActions.js";
 import type * as sources from "../sources.js";
@@ -21,7 +23,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  chunks: typeof chunks;
   http: typeof http;
+  messages: typeof messages;
   notebooks: typeof notebooks;
   sourceActions: typeof sourceActions;
   sources: typeof sources;
