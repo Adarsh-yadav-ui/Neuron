@@ -4,16 +4,16 @@ import { Id } from "@convex/_generated/dataModel";
 import { inngest } from "@/inngest/client";
 
 const fireInngest = async (data: object) => {
-  try {
-    const url =
-      process.env.NEXT_PUBLIC_INNGEST_DEV_URL ?? "http://localhost:8288/e/key";
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "source/process", data }),
-    });
-    const json = await res.json();
-  } catch (err) {}
+  const url =
+    process.env.NODE_ENV === "production"
+      ? `https://inn.gs/e/${process.env.NEXT_PUBLIC_INNGEST_EVENT_KEY}`
+      : "http://localhost:8288/e/key";
+
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "source/process", data }),
+  });
 };
 
 export const useUploadSource = () => {
