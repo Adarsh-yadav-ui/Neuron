@@ -80,7 +80,7 @@ Rules:
       },
     });
   } catch (err: any) {
-    console.error("CHAT ERROR:", err);
+
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

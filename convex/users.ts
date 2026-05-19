@@ -73,9 +73,7 @@ export const deleteFromClerk = internalMutation({
     if (user !== null) {
       await ctx.db.delete(user._id);
     } else {
-      console.warn(
-        `Can't delete user, there is none for Clerk user ID: ${clerkUserId}`,
-      );
+   
     }
   },
 });
@@ -146,10 +144,6 @@ export const store = mutation({
         updatedAt: Date.now(),
       });
     } catch (e) {
-      // This is a common pattern to handle "already exists" errors
-      // that arise from race conditions in an insert-after-query.
-      // We can safely ignore the error if it was a race condition insert.
-      console.warn("User already stored, ignoring race-condition insert:", e);
       return;
     }
   },

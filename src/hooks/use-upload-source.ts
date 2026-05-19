@@ -13,11 +13,7 @@ const fireInngest = async (data: object) => {
       body: JSON.stringify({ name: "source/process", data }),
     });
     const json = await res.json();
-    console.log("Inngest STATUS:", res.status);
-    console.log("Inngest BODY:", json);
-  } catch (err) {
-    console.error("Inngest FAILED:", err);
-  }
+  } catch (err) {}
 };
 
 export const useUploadSource = () => {
@@ -30,7 +26,7 @@ export const useUploadSource = () => {
 
   // ── PDF ──
   const uploadPdf = async (file: File, notebookId: Id<"notebooks">) => {
-    if (file.size > 20 * 1024 * 1024)
+    if (file.size > 40 * 1024 * 1024)
       throw new Error("File must be under 20MB");
     if (file.type !== "application/pdf")
       throw new Error("Only PDF files allowed");

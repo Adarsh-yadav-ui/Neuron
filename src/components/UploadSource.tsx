@@ -234,7 +234,7 @@ export function UploadSource({ notebookId, open, onClose }: UploadSourceProps) {
                       Drop your PDF here
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      or click to browse • max 20MB
+                      or click to browse • max 40MB
                     </p>
                   </div>
                 </>
