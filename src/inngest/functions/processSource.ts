@@ -4,7 +4,9 @@ import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import { YoutubeTranscript } from "youtube-transcript";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convex = new ConvexHttpClient(
+  process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL!
+);
 
 export const processSource = inngest.createFunction(
   {
