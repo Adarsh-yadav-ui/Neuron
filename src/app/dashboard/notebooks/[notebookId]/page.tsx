@@ -7,6 +7,7 @@ import { UploadSource } from "@/components/UploadSource";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Copy, Check } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -41,6 +42,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import {
   Accordion,
@@ -228,6 +231,34 @@ function SourcesList({
         </div>
       )}
     </>
+  );
+}
+
+function CopyButton({ text, className }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={`flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors ${className}`}
+      aria-label="Copy"
+    >
+      {copied ? (
+        <>
+          <Check className="h-3 w-3 text-emerald-500" /> Copied
+        </>
+      ) : (
+        <>
+          <Copy className="h-3 w-3" /> Copy
+        </>
+      )}
+    </button>
   );
 }
 
@@ -489,24 +520,102 @@ const ChatPanel = ({
               messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`flex gap-3 ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "assistant" && (
                     <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-background text-xs font-semibold shrink-0 mt-0.5">
                       N
                     </div>
                   )}
+                  <div className="flex flex-col gap-1 max-w-[82%]">
+                    <div
+                      className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                        msg.role === "user"
+                          ? "bg-foreground text-background rounded-br-sm"
+                          : "bg-muted text-foreground rounded-bl-sm"
+                      }`}
+                    >
+                      {msg.role === "user" ? (
+                        msg.content
+                      ) : (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => (
+                              <p className="mb-2 last:mb-0">{children}</p>
+                            ),
+                            strong: ({ children }) => (
+                              <strong className="font-semibold">
+                                {children}
+                              </strong>
+                            ),
+                            em: ({ children }) => (
+                              <em className="italic">{children}</em>
+                            ),
+                            ul: ({ children }) => (
+                              <ul className="list-disc list-inside mb-2 space-y-1">
+                                {children}
+                              </ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol className="list-decimal list-inside mb-2 space-y-1">
+                                {children}
+                              </ol>
+                            ),
+                            li: ({ children }) => (
+                              <li className="text-sm">{children}</li>
+                            ),
+                            code: ({ children, className }) => {
+                              const isBlock = className?.includes("language-");
+                              return isBlock ? (
+                                <div className="relative my-2">
+                                  <pre className="bg-background/50 rounded-lg p-3 overflow-x-auto text-xs">
+                                    <code>{children}</code>
+                                  </pre>
+                                  {/* Code block copy button */}
+                                  <div className="absolute top-2 right-2">
+                                    <CopyButton text={String(children)} />
+                                  </div>
+                                </div>
+                              ) : (
+                                <code className="bg-background/50 rounded px-1 py-0.5 text-xs font-mono">
+                                  {children}
+                                </code>
+                              );
+                            },
+                            blockquote: ({ children }) => (
+                              <blockquote className="border-l-2 border-muted-foreground/30 pl-3 italic my-2">
+                                {children}
+                              </blockquote>
+                            ),
+                            h1: ({ children }) => (
+                              <h1 className="text-base font-bold mb-2">
+                                {children}
+                              </h1>
+                            ),
+                            h2: ({ children }) => (
+                              <h2 className="text-sm font-bold mb-1">
+                                {children}
+                              </h2>
+                            ),
+                            h3: ({ children }) => (
+                              <h3 className="text-sm font-semibold mb-1">
+                                {children}
+                              </h3>
+                            ),
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      )}
+                    </div>
 
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                      msg.role === "user"
-                        ? "bg-foreground text-background rounded-br-sm"
-                        : "bg-muted text-foreground rounded-bl-sm"
-                    }`}
-                  >
-                    {msg.content}
+                    {/* Full message copy button — below the bubble */}
+                    <div
+                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} px-1`}
+                    >
+                      <CopyButton text={msg.content} />
+                    </div>
                   </div>
                 </div>
               ))
@@ -729,8 +838,90 @@ const Page = () => {
                         </AccordionTrigger>
 
                         <AccordionContent>
-                          <div className="rounded-xl bg-muted p-4 text-sm whitespace-pre-wrap leading-relaxed">
-                            {msg.answer}
+                          <div className="rounded-xl bg-muted p-4 text-sm leading-relaxed relative">
+                            {/* Copy button */}
+                            <div className="absolute top-2 right-2">
+                              <CopyButton text={msg.answer} />
+                            </div>
+                            {/* Markdown render */}
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                p: ({ children }) => (
+                                  <p className="mb-2 last:mb-0">{children}</p>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-semibold">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                ul: ({ children }) => (
+                                  <ul className="list-disc list-inside mb-2 space-y-1">
+                                    {children}
+                                  </ul>
+                                ),
+                                ol: ({ children }) => (
+                                  <ol className="list-decimal list-inside mb-2 space-y-1">
+                                    {children}
+                                  </ol>
+                                ),
+                                li: ({ children }) => (
+                                  <li className="text-sm">{children}</li>
+                                ),
+                                code: ({ children, className }) => {
+                                  const isBlock =
+                                    className?.includes("language-");
+                                  return isBlock ? (
+                                    <div className="my-2">
+                                      <div className="flex items-center justify-between bg-background/30 rounded-t-lg px-3 py-1.5 border-b border-border/30">
+                                        <span className="text-xs text-muted-foreground">
+                                          Code
+                                        </span>
+                                        <CopyButton text={String(children)} />
+                                      </div>
+                                      <pre className="bg-background/50 rounded-b-lg p-3 overflow-x-auto text-xs">
+                                        <code>{children}</code>
+                                      </pre>
+                                    </div>
+                                  ) : (
+                                    <code className="bg-background/50 rounded px-1 py-0.5 text-xs font-mono">
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                                blockquote: ({ children }) => (
+                                  <blockquote className="border-l-2 border-muted-foreground/30 pl-3 italic my-2">
+                                    {children}
+                                  </blockquote>
+                                ),
+                                h1: ({ children }) => (
+                                  <h1 className="text-base font-bold mb-2">
+                                    {children}
+                                  </h1>
+                                ),
+                                h2: ({ children }) => (
+                                  <h2 className="text-sm font-bold mb-1">
+                                    {children}
+                                  </h2>
+                                ),
+                                h3: ({ children }) => (
+                                  <h3 className="text-sm font-semibold mb-1">
+                                    {children}
+                                  </h3>
+                                ),
+                              }}
+                            >
+                              {msg.answer}
+                            </ReactMarkdown>
+                          </div>
+                          {/* Question copy button */}
+                          <div className="mt-2 flex justify-end">
+                            <CopyButton
+                              text={`Q: ${msg.question}\n\nA: ${msg.answer}`}
+                            />
                           </div>
                         </AccordionContent>
                       </AccordionItem>
