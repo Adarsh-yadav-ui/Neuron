@@ -5,7 +5,11 @@ import { Id } from "@convex/_generated/dataModel";
 import { YoutubeTranscript } from "youtube-transcript";
 
 const convex = new ConvexHttpClient(
-  process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL!
+  process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL!,
+);
+console.log(
+  "CONVEX URL:",
+  process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL,
 );
 
 export const processSource = inngest.createFunction(
@@ -69,17 +73,17 @@ export const processSource = inngest.createFunction(
     });
 
     await step.run("save-text", async () => {
-  // pehle sirf text save karo
-  await convex.mutation(api.sources.updateSourceStatus, {
-    sourceId: sourceId as Id<"sources">,
-    status: "processing",
-  });
-  // phir text patch karo
-  await convex.mutation(api.sources.saveExtractedText, {
-    sourceId: sourceId as Id<"sources">,
-    extractedText,
-  });
-});
+      // pehle sirf text save karo
+      await convex.mutation(api.sources.updateSourceStatus, {
+        sourceId: sourceId as Id<"sources">,
+        status: "processing",
+      });
+      // phir text patch karo
+      await convex.mutation(api.sources.saveExtractedText, {
+        sourceId: sourceId as Id<"sources">,
+        extractedText,
+      });
+    });
 
     // save chunks + embeddings
     await step.run("chunk-and-embed", async () => {
