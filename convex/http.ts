@@ -28,7 +28,6 @@ http.route({
         break;
       }
       default:
-        console.log("Ignored Clerk webhook event", event.type);
     }
 
     return new Response(null, { status: 200 });
@@ -46,7 +45,6 @@ async function validateRequest(req: Request): Promise<WebhookEvent | null> {
   try {
     return wh.verify(payloadString, svixHeaders) as unknown as WebhookEvent;
   } catch (error) {
-    console.error("Error verifying webhook event", error);
     return null;
   }
 }
